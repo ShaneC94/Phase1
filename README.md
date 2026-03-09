@@ -1,79 +1,184 @@
-# NGSIM Scenario Extraction – Phase 1
+# NGSIM Scenario Extraction -- Phase 1
 
 SOFE 4630U Cloud Computing Project
 
-Group Members
-- Bryan Parmar
-- Riyan Faroqui
-- Shane Currie
+**Group Members** - Bryan Parmar - Riyan Faroqui - Shane Currie
 
----
+------------------------------------------------------------------------
 
-## Overview
+# Overview
 
-This project builds a cloud-based monolithic pipeline for extracting driving scenarios from the NGSIM US-101 dataset.
+This project builds a **cloud-based data processing pipeline** for
+extracting driving scenarios from the **NGSIM US-101 vehicle trajectory
+dataset**.
 
-The system processes vehicle trajectory data stored in Google Cloud Storage and extracts scenarios including:
+The system processes trajectory data stored in **Google Cloud Storage**
+and identifies important driving scenarios including:
 
-- Car following
-- Hard braking
-- Lane changes
+-   Car Following
+-   Hard Braking
+-   Lane Changes
 
-The pipeline is implemented using Apache Beam and executed on Google Cloud Dataflow.
+The pipeline is implemented using **Apache Beam** and executed on
+**Google Cloud Dataflow** for scalable distributed processing.
 
----
+Detected scenarios are written to **Google BigQuery** for storage and
+analysis.
 
-## Architecture
+------------------------------------------------------------------------
 
-NGSIM Dataset (TXT)
-        │
-        V
-Google Cloud Storage
-        │
-        V
-Apache Beam Pipeline (Dataflow)
-        │
-        ├ Data Cleaning
-        ├ Segment Filtering
-        ├ Scenario Detection
-        └ Window Segmentation
-        │
-        V
-BigQuery
+# Dataset
 
----
+The NGSIM US-101 dataset contains detailed vehicle trajectory data
+collected on the US-101 freeway in Los Angeles.
 
-## Setup
+It includes:
 
-Install dependencies:
+-   Vehicle position
+-   Velocity
+-   Acceleration
+-   Lane position
+-   Surrounding vehicles
 
-pip install -r requirements.txt
 
----
+# Architecture
 
-## Running the Pipeline
+Pipeline stages:
 
-Upload dataset to GCS.
+        - Read NGSIM CSV (GCS)\
+        - Parse Rows\
+        - Remove Invalid Data\
+        - Segment Filtering\
+        - Scenario Detection\
+        - Write Results to BigQuery
 
-Then run:
+Cloud services used:
 
-python pipeline.py
+-   Google Cloud Storage -- dataset storage
+-   Apache Beam -- pipeline definition
+-   Google Cloud Dataflow -- distributed execution
+-   BigQuery -- scenario storage and querying
 
----
+------------------------------------------------------------------------
 
-## Output
+# Repository Structure
 
-Detected scenarios are stored in BigQuery:
+pipeline.py -- Apache Beam pipeline\
+preprocessing.py -- CSV parsing and filtering logic\
+scenarios.py -- Scenario detection logic\
+visualization.py -- Scenario visualization scripts\
+setup.py -- Package configuration for Dataflow workers
 
-dataset: ngsim_dataset
-table: scenarios
+------------------------------------------------------------------------
 
----
+# Setup
 
-## Scenario Visualization
+## 1. Install Dependencies
 
-Scenario outputs can be visualized using:
+pip install apache-beam\[gcp\]\
+pip install build
+
+------------------------------------------------------------------------
+
+## 2. Authenticate with Google Cloud
+
+gcloud auth login\
+gcloud auth application-default login
+
+------------------------------------------------------------------------
+
+## 3. Set Project
+
+gcloud config set project YOUR_PROJECT_ID
+
+Verify:
+
+gcloud config list
+
+------------------------------------------------------------------------
+
+# Running the Pipeline
+
+## 1. Create a Cloud Storage Bucket
+
+gsutil mb -l northamerica-northeast2 gs://YOUR_BUCKET_NAME
+
+Example:
+
+gsutil mb -l northamerica-northeast2
+gs://pro-router-485514-f9-ngsim-bucket
+
+------------------------------------------------------------------------
+
+## 2. Upload the NGSIM Dataset
+
+gsutil cp trajectories-0805am-0820am.csv gs://YOUR_BUCKET_NAME/
+
+Verify:
+
+gsutil ls gs://YOUR_BUCKET_NAME
+
+------------------------------------------------------------------------
+
+## 3. Create BigQuery Dataset
+
+bq mk ngsim_dataset
+
+------------------------------------------------------------------------
+
+## 4. Run the Dataflow Pipeline
+
+PROJECT=\$(gcloud config list project --format "value(core.project)")\
+BUCKET=gs://YOUR_BUCKET_NAME
+
+python pipeline.py\
+--runner DataflowRunner\
+--project \$PROJECT\
+--region northamerica-northeast2\
+--worker_machine_type e2-small\
+--temp_location \$BUCKET/temp\
+--staging_location \$BUCKET/staging\
+--setup_file ./setup.py\
+--input \$BUCKET/trajectories-0805am-0820am.csv\
+--output_table \$PROJECT.ngsim_dataset.scenarios\
+--experiment use_unsupported_python_version
+
+------------------------------------------------------------------------
+
+# Monitoring the Pipeline
+
+Open the **Dataflow dashboard** in the Google Cloud Console.
+
+Expected stages:
+
+        - Read NGSIM\
+        - Parse Row\
+        - Remove Invalid\
+        - Segment Filter\
+        - Detect Scenarios\
+        - Write to BigQuery
+
+------------------------------------------------------------------------
+
+# Output
+
+Detected scenarios are written to:
+
+BigQuery Dataset: ngsim_dataset\
+Table: scenarios
+
+Example query:
+
+bq query --use_legacy_sql=false 'SELECT \* FROM
+`PROJECT_ID.ngsim_dataset.scenarios` LIMIT 10'
+
+------------------------------------------------------------------------
+
+# Scenario Visualization
+
+Detected scenarios can be visualized using:
 
 python visualization.py
 
-This generates trajectory and velocity plots used to validate scenario detection.
+This generates trajectory and velocity plots used to validate scenario
+detection.
