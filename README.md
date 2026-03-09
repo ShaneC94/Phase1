@@ -75,7 +75,9 @@ setup.py -- Package configuration for Dataflow workers
 
 ## 1. Install Dependencies
 
-pip install apache-beam\[gcp\]\
+pip install apache-beam[gcp]\
+pip install google-cloud-bigquery\
+pip install db-dtypes\
 pip install build
 
 ------------------------------------------------------------------------
@@ -182,3 +184,4 @@ python visualization.py
 
 This generates trajectory and velocity plots used to validate scenario
 detection.
+
