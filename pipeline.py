@@ -60,6 +60,7 @@ def run(argv=None, save_main_session=True):
                 skip_header_lines=1
             )
             | "Parse Rows" >> beam.Map(parse_row)
+            | "Remove Parse Failures" >> beam.Filter(lambda x: x is not None)
             | "Remove Invalid" >> beam.Filter(remove_invalid)
             | "Segment Filter" >> beam.Filter(segment_filter)
         )
