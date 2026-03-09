@@ -40,6 +40,13 @@ It includes:
 -   Lane position
 -   Surrounding vehicles
 
+It can be downloaded at:
+
+        https://data.transportation.gov/Automobiles/Next-Generation-Simulation-NGSIM-Vehicle-Trajector/8ect-6jqj/about_data
+
+The file to download is named:
+
+        US-101-LosAngeles-CA.zip
 
 # Architecture
 
@@ -185,5 +192,6 @@ python visualization.py
 
 This generates trajectory and velocity plots used to validate scenario
 detection. These are stored within plots/ and can be downloaded for viewing.
+
 
 
