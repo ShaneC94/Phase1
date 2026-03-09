@@ -19,7 +19,7 @@ def parse_row(line):
             "preceding": int(cols[14]),
         }
 
-    except ValueError:
+    except Exception:
         return None
     
 def remove_invalid(row):
@@ -38,3 +38,4 @@ def segment_filter(row):
     return 100 <= row["local_y"] <= 500
     
     
+
