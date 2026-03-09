@@ -78,6 +78,7 @@ setup.py -- Package configuration for Dataflow workers
 pip install apache-beam[gcp]\
 pip install google-cloud-bigquery\
 pip install db-dtypes\
+pip install gcsfs\
 pip install build
 
 ------------------------------------------------------------------------
@@ -183,5 +184,6 @@ Detected scenarios can be visualized using:
 python visualization.py
 
 This generates trajectory and velocity plots used to validate scenario
-detection.
+detection. These are stored within plots/ and can be downloaded for viewing.
+
 
