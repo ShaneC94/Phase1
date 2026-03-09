@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 from google.cloud import bigquery
 
 
-PROJECT_ID = "pro-router-485514-f9"
-DATASET = "ngsim"
-TABLE = "scenarios"
+PROJECT_ID = "YOUR_PROJECT_ID"
+DATASET = "YOUR_DATASET"
+TABLE = "YOUR_TABLE"
 
 
 def load_data():
@@ -81,3 +81,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
