@@ -1,92 +1,96 @@
-import argparse
 import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
-
-from preprocessing import parse_row, remove_invalid, segment_filter
-from scenarios import detect_hard_braking, detect_car_following
-
-
-schema = """
-vehicle_id:INTEGER,
-frame_id:INTEGER,
-scenario:STRING,
-velocity:FLOAT,
-acceleration:FLOAT,
-lane_id:INTEGER
-"""
+from apache_beam.options.pipeline_options import PipelineOptions
+import argparse
+from scenarios import generate_scenarios
 
 
-class ScenarioDetection(beam.DoFn):
+def parse_csv(line):
 
-    def process(self, row):
+    cols = line.split(",")
 
-        brake = detect_hard_braking(row)
-        if brake:
-            yield brake
+    # skip malformed rows
+    if len(cols) < 15:
+        return None
 
-        follow = detect_car_following(row)
-        if follow:
-            yield follow
+    try:
+        return {
+            "vehicle_id": int(cols[0]),
+            "frame_id": int(cols[1]),
+
+            # vehicle position
+            "local_x": float(cols[4]),
+            "local_y": float(cols[5]),
+
+            # motion
+            "velocity": float(cols[11]),
+            "acceleration": float(cols[12]),
+
+            # lane + nearby vehicles
+            "lane_id": int(cols[13]),
+            "preceding": int(cols[14]),
+        }
+
+    except:
+        return None
 
 
-def run(argv=None, save_main_session=True):
+class DetectScenarios(beam.DoFn):
+
+    def process(self, element):
+
+        vehicle_id, rows = element
+
+        rows = sorted(rows, key=lambda r: r["frame_id"])
+
+        scenarios = generate_scenarios(rows)
+
+        for s in scenarios:
+            yield s
+
+
+def run():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--input",
-        required=True,
-        help="Input CSV file in GCS"
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--output_table", required=True)
+
+    args, beam_args = parser.parse_known_args()
+
+    pipeline_options = PipelineOptions(
+        beam_args,
+        save_main_session=True
     )
-
-    parser.add_argument(
-        "--output_table",
-        required=True,
-        help="BigQuery output table PROJECT:DATASET.TABLE"
-    )
-
-    known_args, pipeline_args = parser.parse_known_args(argv)
-
-    pipeline_options = PipelineOptions(pipeline_args)
-
-    pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
 
     with beam.Pipeline(options=pipeline_options) as p:
 
-        rows = (
+        (
             p
-            | "Read NGSIM" >> beam.io.ReadFromText(
-                known_args.input,
-                skip_header_lines=1
+            | "Read CSV" >> beam.io.ReadFromText(args.input, skip_header_lines=1)
+
+            | "Parse CSV" >> beam.Map(parse_csv)
+
+            | "Remove bad rows" >> beam.Filter(lambda x: x is not None)
+
+            | "Key by vehicle" >> beam.Map(lambda x: (x["vehicle_id"], x))
+
+            | "Group by vehicle" >> beam.GroupByKey()
+
+            | "Detect Scenarios" >> beam.ParDo(DetectScenarios())
+
+            | "Write BQ" >> beam.io.WriteToBigQuery(
+                args.output_table,
+                schema={
+                    "fields": [
+                        {"name": "ego_vehicle", "type": "INTEGER"},
+                        {"name": "start_frame", "type": "INTEGER"},
+                        {"name": "end_frame", "type": "INTEGER"},
+                        {"name": "scenario_label", "type": "STRING"},
+                    ]
+                },
+                write_disposition="WRITE_APPEND",
+                create_disposition="CREATE_IF_NEEDED",
             )
-            | "Parse Rows" >> beam.Map(parse_row)
-            | "Remove Parse Failures" >> beam.Filter(lambda x: x is not None)
-            | "Remove Invalid" >> beam.Filter(remove_invalid)
-            | "Segment Filter" >> beam.Filter(segment_filter)
-        )
-
-        scenarios = (
-            rows
-            | "Detect Scenarios" >> beam.ParDo(ScenarioDetection())
-        )
-
-        formatted = (
-            scenarios
-            | "Format Output" >> beam.Map(lambda r: {
-                "vehicle_id": r["vehicle_id"],
-                "frame_id": r["frame_id"],
-                "scenario": r["scenario"],
-                "velocity": r["velocity"],
-                "acceleration": r["acceleration"],
-                "lane_id": r["lane_id"]
-            })
-        )
-
-        formatted | "Write to BigQuery" >> beam.io.WriteToBigQuery(
-            known_args.output_table,
-            schema=schema,
-            write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
-            create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED
         )
 
 
