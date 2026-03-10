@@ -4,11 +4,11 @@ import subprocess
 import os
 from google.cloud import bigquery
 
-PROJECT = "YOUR_PROJECT_ID"
-DATASET = "ngsim"
+PROJECT = "<PROJECT_ID>"
+DATASET = "ngsim_dataset"
 TABLE = "scenarios"
 
-RAW_DATA = "gs://ngsim-dataflow-bucket/trajectories-0805am-0820am.csv"
+RAW_DATA = "gs://<BUCKET_NAME>/trajectories-0805am-0820am.csv"
 LOCAL_FILE = "trajectories.csv"
 
 PLOT_DIR = "plots"
@@ -348,3 +348,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
