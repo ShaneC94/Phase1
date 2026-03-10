@@ -9,8 +9,9 @@ setup(
     packages=find_packages(),
     py_modules=[
         "pipeline",
-        "scenario",
+        "scenarios",
         "preprocessing",
         "visualization"
     ]
 )
+
