@@ -86,6 +86,7 @@ pip install apache-beam[gcp]\
 pip install google-cloud-bigquery\
 pip install db-dtypes\
 pip install gcsfs\
+pip install matplotlib\
 pip install build
 
 ------------------------------------------------------------------------
@@ -111,46 +112,52 @@ gcloud config list
 
 ## 1. Create a Cloud Storage Bucket
 
-gsutil mb -l northamerica-northeast2 gs://YOUR_BUCKET_NAME
+gsutil mb -l northamerica-northeast2 gs://ngsim-dataflow-bucket
 
-Example:
+### Dataflow Staging Folders
 
-gsutil mb -l northamerica-northeast2
-gs://pro-router-485514-f9-ngsim-bucket
+gsutil mkdir gs://ngsim-dataflow-bucket/temp
+gsutil mkdir gs://ngsim-dataflow-bucket/staging
 
 ------------------------------------------------------------------------
 
 ## 2. Upload the NGSIM Dataset
 
-gsutil cp trajectories-0805am-0820am.csv gs://YOUR_BUCKET_NAME/
+gsutil cp trajectories-0805am-0820am.csv gs://ngsim-dataflow-bucket
 
 Verify:
 
-gsutil ls gs://YOUR_BUCKET_NAME
+gsutil ls gs://ngsim-dataflow-bucket
 
 ------------------------------------------------------------------------
 
 ## 3. Create BigQuery Dataset
 
-bq mk ngsim_dataset
+bq --location=northamerica-northeast2 mk ngsim_dataset
+
+Verify:
+
+bq ls
+
+The BigQuery table "scenarios" will automatically be created by the Apache Beam pipeline when ran.
 
 ------------------------------------------------------------------------
 
 ## 4. Run the Dataflow Pipeline
 
-PROJECT=\$(gcloud config list project --format "value(core.project)")\
-BUCKET=gs://YOUR_BUCKET_NAME
+PROJECT=$(gcloud config list project --format "value(core.project)")
+BUCKET=gs://ngsim-dataflow-bucket
 
-python pipeline.py\
---runner DataflowRunner\
---project \$PROJECT\
---region northamerica-northeast2\
---worker_machine_type e2-small\
---temp_location \$BUCKET/temp\
---staging_location \$BUCKET/staging\
---setup_file ./setup.py\
---input \$BUCKET/trajectories-0805am-0820am.csv\
---output_table \$PROJECT.ngsim_dataset.scenarios\
+python pipeline.py \
+--runner DataflowRunner \
+--project $PROJECT \
+--region northamerica-northeast2 \
+--worker_machine_type e2-small \
+--temp_location $BUCKET/temp \
+--staging_location $BUCKET/staging \
+--setup_file ./setup.py \
+--input $BUCKET/trajectories-0805am-0820am.csv \
+--output_table $PROJECT.ngsim_dataset.scenarios \
 --experiment use_unsupported_python_version
 
 ------------------------------------------------------------------------
@@ -179,8 +186,8 @@ Table: scenarios
 
 Example query:
 
-bq query --use_legacy_sql=false 'SELECT \* FROM
-`PROJECT_ID.ngsim_dataset.scenarios` LIMIT 10'
+bq query --use_legacy_sql=false \
+'SELECT * FROM `PROJECT_ID.ngsim_dataset.scenarios` LIMIT 10'
 
 ------------------------------------------------------------------------
 
@@ -192,6 +199,7 @@ python visualization.py
 
 This generates trajectory and velocity plots used to validate scenario
 detection. These are stored within plots/ and can be downloaded for viewing.
+
 
 
 
