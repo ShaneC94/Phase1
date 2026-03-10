@@ -82,29 +82,29 @@ setup.py -- Package configuration for Dataflow workers
 
 ## 1. Install Dependencies
 
-pip install apache-beam[gcp]\
-pip install google-cloud-bigquery\
-pip install db-dtypes\
-pip install gcsfs\
-pip install matplotlib\
-pip install build
+        pip install apache-beam[gcp]\
+        pip install google-cloud-bigquery\
+        pip install db-dtypes\
+        pip install gcsfs\
+        pip install matplotlib\
+        pip install build
 
 ------------------------------------------------------------------------
 
 ## 2. Authenticate with Google Cloud
 
-gcloud auth login\
-gcloud auth application-default login
+        gcloud auth login\
+        gcloud auth application-default login
 
 ------------------------------------------------------------------------
 
 ## 3. Set Project
 
-gcloud config set project YOUR_PROJECT_ID
+        gcloud config set project YOUR_PROJECT_ID
 
 Verify:
 
-gcloud config list
+        gcloud config list
 
 ------------------------------------------------------------------------
 
@@ -112,32 +112,32 @@ gcloud config list
 
 ## 1. Create a Cloud Storage Bucket
 
-gsutil mb -l northamerica-northeast2 gs://ngsim-dataflow-bucket
+        gsutil mb -l northamerica-northeast2 gs://ngsim-dataflow-bucket
 
 ### Dataflow Staging Folders
 
-gsutil mkdir gs://ngsim-dataflow-bucket/temp
-gsutil mkdir gs://ngsim-dataflow-bucket/staging
+        gsutil mkdir gs://ngsim-dataflow-bucket/temp
+        gsutil mkdir gs://ngsim-dataflow-bucket/staging
 
 ------------------------------------------------------------------------
 
 ## 2. Upload the NGSIM Dataset
 
-gsutil cp trajectories-0805am-0820am.csv gs://ngsim-dataflow-bucket
+        gsutil cp trajectories-0805am-0820am.csv gs://ngsim-dataflow-bucket
 
 Verify:
 
-gsutil ls gs://ngsim-dataflow-bucket
+        gsutil ls gs://ngsim-dataflow-bucket
 
 ------------------------------------------------------------------------
 
 ## 3. Create BigQuery Dataset
 
-bq --location=northamerica-northeast2 mk ngsim_dataset
+        bq --location=northamerica-northeast2 mk ngsim_dataset
 
 Verify:
 
-bq ls
+        bq ls
 
 The BigQuery table "scenarios" will automatically be created by the Apache Beam pipeline when ran.
 
@@ -145,20 +145,20 @@ The BigQuery table "scenarios" will automatically be created by the Apache Beam 
 
 ## 4. Run the Dataflow Pipeline
 
-PROJECT=$(gcloud config list project --format "value(core.project)")
-BUCKET=gs://ngsim-dataflow-bucket
-
-python pipeline.py \
---runner DataflowRunner \
---project $PROJECT \
---region northamerica-northeast2 \
---worker_machine_type e2-small \
---temp_location $BUCKET/temp \
---staging_location $BUCKET/staging \
---setup_file ./setup.py \
---input $BUCKET/trajectories-0805am-0820am.csv \
---output_table $PROJECT.ngsim_dataset.scenarios \
---experiment use_unsupported_python_version
+        PROJECT=$(gcloud config list project --format "value(core.project)")
+        BUCKET=gs://ngsim-dataflow-bucket
+        
+        python pipeline.py \
+        --runner DataflowRunner \
+        --project $PROJECT \
+        --region northamerica-northeast2 \
+        --worker_machine_type e2-small \
+        --temp_location $BUCKET/temp \
+        --staging_location $BUCKET/staging \
+        --setup_file ./setup.py \
+        --input $BUCKET/trajectories-0805am-0820am.csv \
+        --output_table $PROJECT.ngsim_dataset.scenarios \
+        --experiment use_unsupported_python_version
 
 ------------------------------------------------------------------------
 
@@ -186,8 +186,8 @@ Table: scenarios
 
 Example query:
 
-bq query --use_legacy_sql=false \
-'SELECT * FROM `PROJECT_ID.ngsim_dataset.scenarios` LIMIT 10'
+        bq query --use_legacy_sql=false \
+        'SELECT * FROM `PROJECT_ID.ngsim_dataset.scenarios` LIMIT 10'
 
 ------------------------------------------------------------------------
 
@@ -195,10 +195,11 @@ bq query --use_legacy_sql=false \
 
 Detected scenarios can be visualized using:
 
-python visualization.py
+        python visualization.py
 
 This generates trajectory and velocity plots used to validate scenario
 detection. These are stored within plots/ and can be downloaded for viewing.
+
 
 
 
