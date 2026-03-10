@@ -125,7 +125,7 @@ def plot_lane_changes(raw, scenarios):
         return
 
     samples = lane.sample(
-        min(15, len(lane)),
+        min(30, len(lane)),
         random_state=42
     )
 
@@ -198,7 +198,7 @@ def plot_braking(raw, scenarios):
         return
 
     samples = brake.sample(
-        min(15, len(brake)),
+        min(30, len(brake)),
         random_state=42
     )
 
@@ -264,7 +264,7 @@ def plot_following(raw, scenarios):
         return
 
     samples = follow.sample(
-        min(15, len(follow)),
+        min(30, len(follow)),
         random_state=42
     )
 
@@ -349,5 +349,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
