@@ -4,8 +4,9 @@ import subprocess
 import os
 from google.cloud import bigquery
 
+# Update these values to match your GCP configuration
 PROJECT = "<PROJECT_ID>"
-DATASET = "ngsim_dataset"
+DATASET = "<BQ_DATASET>"
 TABLE = "scenarios"
 
 RAW_DATA = "gs://<BUCKET_NAME>/trajectories-0805am-0820am.csv"
@@ -348,4 +349,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
