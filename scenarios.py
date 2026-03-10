@@ -1,49 +1,60 @@
-from collections import defaultdict
+import numpy as np
+
+WINDOW_SIZE = 50  # ~5 seconds (NGSIM = 10Hz)
 
 
-def detect_hard_braking(row):
+def detect_scenario(window):
 
-    if row["acceleration"] < -10:
-        row["scenario"] = "hard_braking"
-        return row
+    velocities = [r["velocity"] for r in window]
 
-    return None
+    if len(velocities) > 1:
 
+        accel = np.diff(velocities) / 0.1
 
-def detect_car_following(row):
+        strong_brake_frames = np.sum(accel < -4)
 
-    if row["preceding"] != 0:
-        row["scenario"] = "car_following"
-        return row
+        velocity_drop = velocities[0] - velocities[-1]
 
-    return None
+        if strong_brake_frames >= 3 and velocity_drop > 5:
+            return "hard_braking"
 
+    # lane change
+    lane_ids = [r["lane_id"] for r in window]
 
-def detect_lane_change(vehicle_records):
+    if len(set(lane_ids)) > 1:
+        return "lane_change"
 
-    vehicle_records = sorted(vehicle_records, key=lambda x: x["frame_id"])
+    # car following
+    lead = window[0].get("preceding", 0)
 
-    lane_changes = []
+    if lead > 0:
 
-    previous_lane = vehicle_records[0]["lane_id"]
+        if len(set(lane_ids)) == 1:
 
-    for row in vehicle_records:
+            if np.std(velocities) < 2:
+                return "car_following"
 
-        if row["lane_id"] != previous_lane:
-
-            row["scenario"] = "lane_change"
-            lane_changes.append(row)
-
-        previous_lane = row["lane_id"]
-
-    return lane_changes
+    return "normal_driving"
 
 
-def group_by_vehicle(records):
+def generate_scenarios(vehicle_rows):
 
-    vehicles = defaultdict(list)
+    scenarios = []
 
-    for r in records:
-        vehicles[r["vehicle_id"]].append(r)
+    if len(vehicle_rows) < WINDOW_SIZE:
+        return scenarios
 
-    return vehicles
+    for start in range(0, len(vehicle_rows) - WINDOW_SIZE, WINDOW_SIZE):
+
+        window = vehicle_rows[start:start + WINDOW_SIZE]
+
+        label = detect_scenario(window)
+
+        scenarios.append({
+            "ego_vehicle": window[0]["vehicle_id"],
+            "start_frame": window[0]["frame_id"],
+            "end_frame": window[-1]["frame_id"],
+            "scenario_label": label
+        })
+
+    return scenarios
