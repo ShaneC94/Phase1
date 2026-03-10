@@ -100,7 +100,7 @@ setup.py -- Package configuration for Dataflow workers
 
 ## 3. Set Project
 
-        gcloud config set project YOUR_PROJECT_ID
+        gcloud config set project <PROJECT_ID>
 
 Verify:
 
@@ -110,30 +110,44 @@ Verify:
 
 # Running the Pipeline
 
+## Define variables
+
+        PROJECT=<PROJECT_ID>
+        BUCKET=gs://<BUCKET_NAME>
+        DATASET=<BQ_DATASET>
+        TABLE=scenarios
+
+Example:
+
+        PROJECT=my-gcp-project
+        BUCKET=gs://ngsim-dataflow-bucket
+        DATASET=ngsim_dataset
+        TABLE=scenarios
+
 ## 1. Create a Cloud Storage Bucket
 
-        gsutil mb -l northamerica-northeast2 gs://ngsim-dataflow-bucket
+        gsutil mb -l northamerica-northeast2 $BUCKET
 
 ### Dataflow Staging Folders
 
-        gsutil mkdir gs://ngsim-dataflow-bucket/temp
-        gsutil mkdir gs://ngsim-dataflow-bucket/staging
+        gsutil mkdir $BUCKET/temp
+        gsutil mkdir $BUCKET/staging
 
 ------------------------------------------------------------------------
 
 ## 2. Upload the NGSIM Dataset
 
-        gsutil cp trajectories-0805am-0820am.csv gs://ngsim-dataflow-bucket
+        gsutil cp trajectories-0805am-0820am.csv $BUCKET
 
 Verify:
 
-        gsutil ls gs://ngsim-dataflow-bucket
+        gsutil ls $BUCKET
 
 ------------------------------------------------------------------------
 
 ## 3. Create BigQuery Dataset
 
-        bq --location=northamerica-northeast2 mk ngsim_dataset
+        bq --location=northamerica-northeast2 mk $DATASET
 
 Verify:
 
@@ -144,9 +158,6 @@ The BigQuery table "scenarios" will automatically be created by the Apache Beam 
 ------------------------------------------------------------------------
 
 ## 4. Run the Dataflow Pipeline
-
-        PROJECT=$(gcloud config list project --format "value(core.project)")
-        BUCKET=gs://ngsim-dataflow-bucket
         
         python pipeline.py \
         --runner DataflowRunner \
@@ -157,7 +168,7 @@ The BigQuery table "scenarios" will automatically be created by the Apache Beam 
         --staging_location $BUCKET/staging \
         --setup_file ./setup.py \
         --input $BUCKET/trajectories-0805am-0820am.csv \
-        --output_table $PROJECT.ngsim_dataset.scenarios \
+        --output_table $PROJECT.$DATASET.$TABLE \
         --experiment use_unsupported_python_version
 
 ------------------------------------------------------------------------
@@ -181,13 +192,10 @@ Expected stages:
 
 Detected scenarios are written to:
 
-BigQuery Dataset: ngsim_dataset\
-Table: scenarios
+Example:
 
-Example query:
-
-        bq query --use_legacy_sql=false \
-        'SELECT * FROM `PROJECT_ID.ngsim_dataset.scenarios` LIMIT 10'
+        BigQuery Dataset: ngsim_dataset\
+        Table: scenarios
 
 ------------------------------------------------------------------------
 
@@ -200,6 +208,17 @@ Detected scenarios can be visualized using:
 This generates trajectory and velocity plots used to validate scenario
 detection. These are stored within plots/ and can be downloaded for viewing.
 
+------------------------------------------------------------------------
+
+# Notes
+
+The NGSIM dataset records vehicle trajectories at **10 Hz**.
+
+This means:
+
+        50 frames ≈ 5 seconds
+
+Scenario detection therefore operates on **5-second windows** of trajectory data.
 
 
 
