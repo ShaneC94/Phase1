@@ -208,6 +208,11 @@ Detected scenarios can be visualized using:
 This generates trajectory and velocity plots used to validate scenario
 detection. These are stored within plots/ and can be downloaded for viewing.
 
+<img width="1800" height="1200" alt="Image" src="https://github.com/user-attachments/assets/3e9cde96-4eeb-401d-a2d1-17a072155117" />
+<img width="3600" height="1800" alt="Image" src="https://github.com/user-attachments/assets/14b9c152-73fa-4765-af99-5b2a0a51f3e6" />
+<img width="3000" height="1800" alt="Image" src="https://github.com/user-attachments/assets/2f79c7c8-9500-4e97-a491-5c7ed8f973e3" />
+<img width="3000" height="1800" alt="Image" src="https://github.com/user-attachments/assets/3801b592-c6ed-4c1e-8173-21a26c822a35" />
+<img width="3000" height="1800" alt="Image" src="https://github.com/user-attachments/assets/9f183d6b-38ff-444a-ac04-9465dfeaa7e5" />
 ------------------------------------------------------------------------
 
 # Notes
